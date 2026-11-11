@@ -118,13 +118,7 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 .chip.W { background: var(--war); color: var(--on-solid); }
 .empty { color: var(--muted); font-size: 0.9rem; }
 
-/* end of match */
-.guess { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 0.5rem; }
-.guess button {
-  background: transparent; border: 1px solid var(--line); border-radius: 4px;
-  padding: 0.6rem 0.75rem; text-align: left; font-weight: 600;
-}
-.guess button:hover { border-color: var(--ink); }
+/* full time */
 .verdict { display: flex; flex-direction: column; gap: 0.75rem; }
 .verdict .name { font: 800 1.9rem/1.05 var(--display); }
 .thought { border-left: 3px solid var(--ink); padding-left: 0.9rem; font-size: 1.05rem; }
@@ -132,38 +126,36 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
   align-self: flex-start; background: var(--ink); color: var(--bg);
   border: 0; border-radius: 4px; padding: 0.7rem 1.1rem; font-weight: 600;
 }
+.results { list-style: none; margin: 0; padding: 0; font-size: 0.92rem; color: var(--muted); }
+.results li { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.2rem 0; }
+.results b { font-family: var(--mono); color: var(--ink); white-space: nowrap; }
 
-/* reference */
+/* reference + league */
 .matrix-box { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
 th, td { border: 1px solid var(--line); padding: 0.55rem 0.7rem; text-align: left; }
 th { font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 td b { font-family: var(--mono); }
 section { display: flex; flex-direction: column; gap: 0.75rem; }
-.rulers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.rulers li { display: grid; grid-template-columns: 8.5rem 1fr auto; gap: 0.75rem; padding: 0.55rem 0; border-top: 1px solid var(--line); align-items: baseline; }
-.rulers li > * { min-width: 0; }
-.rulers .who { font-weight: 600; }
-.rulers .what { color: var(--muted); font-size: 0.92rem; }
-.rulers .seen { font: 600 0.7rem/1 var(--mono); color: var(--peace); letter-spacing: 0.06em; }
-@media (max-width: 30rem) {
-  .rulers li { grid-template-columns: 1fr auto; }
-  .rulers .what { grid-column: 1 / -1; grid-row: 2; }
-}
+.league th, .league td { border-width: 0 0 1px 0; padding: 0.5rem 0.4rem; }
+.league td.n, .league th.n { text-align: right; font-family: var(--mono); font-size: 0.88rem; }
+.league td.pts { font-weight: 600; color: var(--ink); }
+.league tr.me td { background: var(--surface); font-weight: 600; }
+.league tr.next td:nth-child(2)::after { content: " \2190  next"; font: 600 0.68rem/1 var(--mono); color: var(--war); letter-spacing: 0.05em; }
 </style>
 
 <div class="wrap">
   <header>
-    <span class="label">A game for two rulers</span>
+    <span class="label">A league of ten &middot; nineteen weeks</span>
     <h1><span class="w">War</span> <span class="or">or</span> <span class="p">Peace</span></h1>
-    <p class="lede">Each round you and a rival ruler choose in secret. You do not know who they are, how they think, or which round will be the last.</p>
+    <p class="lede">Every week you are drawn against another side. Each round you both choose in secret. Nobody tells you how they think, or which round will be the last.</p>
   </header>
 
   <div class="table">
     <div class="scores">
       <div class="side"><span class="label">You</span><span class="num" id="you">0</span></div>
-      <div class="round label">Round<b id="round">1</b></div>
-      <div class="side them"><span class="label">Rival</span><span class="num" id="them">0</span></div>
+      <div class="round label"><span id="week-label">Week 1 of 19</span><b id="round">Round 1</b></div>
+      <div class="side them"><span class="label" id="opp-name">Rival</span><span class="num" id="them">0</span></div>
     </div>
 
     <p class="say" id="say" aria-live="polite">The rival's envoy is waiting. What are your orders?</p>
@@ -173,29 +165,29 @@ section { display: flex; flex-direction: column; gap: 0.75rem; }
       <button class="choice war" id="btn-war" type="button">War<small>press W</small></button>
     </div>
 
-    <div id="guess-panel" hidden>
-      <section>
-        <h2>The match is over. Who were you facing?</h2>
-        <p class="lede">Name the ruler correctly for 5 bonus points.</p>
-        <div class="guess" id="guess"></div>
-      </section>
-    </div>
-
     <div class="verdict" id="verdict" hidden>
       <span class="label" id="verdict-label"></span>
       <div class="name" id="verdict-name"></div>
-      <p id="verdict-how"></p>
-      <p class="thought" id="verdict-thought"></p>
-      <button class="again" id="btn-again" type="button">Face another ruler</button>
+      <ul class="results" id="results"></ul>
+      <p class="thought" id="verdict-thought" hidden></p>
+      <button class="again" id="btn-next" type="button">Next match</button>
     </div>
 
     <div class="record">
       <span class="label">Record of rounds</span>
       <div class="rows">
         <span class="label">You</span><div class="chips" id="hist-you"></div>
-        <span class="label">Rival</span><div class="chips" id="hist-them"></div>
+        <span class="label">Them</span><div class="chips" id="hist-them"></div>
       </div>
       <p class="empty" id="hist-empty">Nothing yet. Every choice you both make is written here.</p>
+    </div>
+
+    <div class="record" id="last" hidden>
+      <span class="label" id="last-label"></span>
+      <div class="rows">
+        <span class="label">You</span><div class="chips" id="last-you"></div>
+        <span class="label">Them</span><div class="chips" id="last-them"></div>
+      </div>
     </div>
   </div>
 
@@ -214,121 +206,161 @@ section { display: flex; flex-direction: column; gap: 0.75rem; }
   </section>
 
   <section>
-    <h2>The eight rulers</h2>
-    <p class="lede">One is chosen in secret each match. <span id="career"></span></p>
-    <ul class="rulers" id="rulers"></ul>
+    <h2>League table</h2>
+    <p class="lede">Ten sides, nineteen weeks. You meet everyone twice, then the final week pairs neighbours in the table. Your league points are the points you score in your matches, so beating a side earns nothing by itself.</p>
+    <div class="matrix-box">
+      <table class="league">
+        <thead><tr><th class="n">#</th><th>Side</th><th class="n">P</th><th class="n">W</th><th class="n">D</th><th class="n">L</th><th class="n">+/&minus;</th><th class="n">Pts</th></tr></thead>
+        <tbody id="league"></tbody>
+      </table>
+    </div>
   </section>
 </div>
 
 <script>
-// A ruler decides from its own past moves (mine) and the player's past moves (yours).
-var RULERS = [
-  { id: 'mirror', name: 'The Mirror', what: 'Opens with peace, then does whatever you did last round.',
-    play: function (mine, yours) { return yours.length ? yours[yours.length - 1] : 'P'; } },
-  { id: 'grudge', name: 'The Grudge', what: 'Keeps the peace until you attack once. Never forgives.',
-    play: function (mine, yours) { return yours.indexOf('W') >= 0 ? 'W' : 'P'; } },
-  { id: 'saint', name: 'The Saint', what: 'Always picks peace, whatever you do.',
-    play: function () { return 'P'; } },
-  { id: 'warlord', name: 'The Warlord', what: 'Always picks war, whatever you do.',
-    play: function () { return 'W'; } },
-  { id: 'gambler', name: 'The Gambler', what: 'Flips a coin every round. There is no pattern to find.',
-    play: function () { return Math.random() < 0.5 ? 'P' : 'W'; } },
-  { id: 'forgiver', name: 'The Forgiver', what: 'Lets one attack slide. Strikes back only after two in a row.',
-    play: function (mine, yours) {
+// Nine hidden tactics, one per side, reshuffled every season. A tactic decides from its own past moves (mine) and the player's past moves (yours).
+var TACTICS = [
+  { play: function (mine, yours) { return yours.length ? yours[yours.length - 1] : 'P'; } },
+  { play: function (mine, yours) { return yours.indexOf('W') >= 0 ? 'W' : 'P'; } },
+  { play: function () { return 'P'; } },
+  { play: function () { return 'W'; } },
+  { play: function () { return Math.random() < 0.5 ? 'P' : 'W'; } },
+  { play: function (mine, yours) {
       var n = yours.length;
       return n >= 2 && yours[n - 1] === 'W' && yours[n - 2] === 'W' ? 'W' : 'P';
     } },
-  { id: 'opportunist', name: 'The Opportunist', what: 'Repeats a move that scored. Switches after a round that paid nothing.',
-    play: function (mine, yours) {
+  { play: function (mine, yours) {
       if (!mine.length) return 'P';
       var last = mine[mine.length - 1];
       return yours[yours.length - 1] === 'P' ? last : (last === 'P' ? 'W' : 'P');
     } },
-  { id: 'tester', name: 'The Tester', what: 'Attacks in round 2 to see if you hit back. If you stay peaceful through round 4, it exploits you for good.',
-    play: function (mine, yours) {
+  { play: function (mine, yours) {
       var n = mine.length;
       if (n < 4) return n === 1 ? 'W' : 'P';
       return yours.slice(0, 4).indexOf('W') < 0 ? 'W' : yours[n - 1];
-    } }
+    } },
+  { play: function (mine, yours) { return yours.length ? yours[yours.length - 1] : 'W'; } }
 ];
+var NAMES = ['Ashford Rovers', 'Kingsmere United', 'Northgate Athletic', 'Harrow Vale', 'Port Ellery City',
+  'Redcliff Town', 'Saltmarsh Albion', 'Thornbury Wanderers', 'Westmoor County'];
+var WEEKS = 19;
 var PAY = { PP: [3, 3], PW: [0, 5], WP: [5, 0], WW: [0, 0] };
 var SAY = {
   PP: 'You both kept the peace. 3 points each.',
   PW: 'You offered peace and they attacked. They take 5, you get nothing.',
-  WP: 'You attacked a peaceful rival. You take 5, they get nothing.',
+  WP: 'You attacked a peaceful side. You take 5, they get nothing.',
   WW: 'War on both sides. Nobody gains anything.'
 };
 
 var $ = function (id) { return document.getElementById(id); };
 var S;
 
-function store(key, val) {
-  try {
-    if (val === undefined) return JSON.parse(localStorage.getItem(key) || 'null');
-    localStorage.setItem(key, JSON.stringify(val));
-  } catch (e) {}
-  return null;
+function save() { try { localStorage.setItem('wop-season', JSON.stringify(S)); } catch (e) {} }
+function load() { try { return JSON.parse(localStorage.getItem('wop-season') || 'null'); } catch (e) { return null; } }
+function shuffle(a) {
+  for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
 }
-var career = store('wop-career') || { matches: 0, named: 0, met: {} };
+function matchLength() { return 5 + Math.floor(Math.random() * 5); }   // 5 to 9 rounds, hidden
 
-function newMatch() {
-  S = {
-    ruler: Math.floor(Math.random() * RULERS.length),
-    length: 10 + Math.floor(Math.random() * 7),   // 10 to 16 rounds, hidden from the player
-    you: [], them: [], scoreYou: 0, scoreThem: 0,
-    phase: 'play', say: "The rival's envoy is waiting. What are your orders?", guess: null
-  };
-  render();
+function newSeason() {
+  var tactics = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+  var teams = [{ name: 'You', tactic: -1 }];
+  NAMES.forEach(function (n, i) { teams.push({ name: n, tactic: tactics[i] }); });
+  teams.forEach(function (t) { t.P = t.W = t.D = t.L = t.F = t.A = 0; });
+  // everyone plays everyone, twice: 18 weeks. Week 19 is drawn from the table later.
+  var order = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]), half = [], r, i;
+  var ring = [0].concat(order);
+  for (r = 0; r < 9; r++) {
+    var wk = [];
+    for (i = 0; i < 5; i++) wk.push([ring[i], ring[9 - i]]);
+    half.push(wk);
+    ring.splice(1, 0, ring.pop());
+  }
+  S = { teams: teams, fixtures: half.concat(half), week: 0, meetings: {}, results: [] };
+  kickOff();
+}
+
+function kickOff() {
+  var pair = S.fixtures[S.week].filter(function (p) { return p[0] === 0 || p[1] === 0; })[0];
+  S.opp = pair[0] === 0 ? pair[1] : pair[0];
+  S.length = matchLength();
+  S.you = []; S.them = []; S.sy = 0; S.st = 0;
+  S.phase = 'play';
+  S.say = S.teams[S.opp].name + ' are at the table. What are your orders?';
+  save(); render();
+}
+
+function record(a, b, sa, sb) {
+  var A = S.teams[a], B = S.teams[b];
+  A.P++; B.P++; A.F += sa; A.A += sb; B.F += sb; B.A += sa;
+  if (sa > sb) { A.W++; B.L++; } else if (sa < sb) { A.L++; B.W++; } else { A.D++; B.D++; }
+}
+function simulate(a, b) {
+  var ta = TACTICS[S.teams[a].tactic], tb = TACTICS[S.teams[b].tactic];
+  var ha = [], hb = [], sa = 0, sb = 0, n = matchLength();
+  for (var i = 0; i < n; i++) {
+    var ma = ta.play(ha.slice(), hb.slice()), mb = tb.play(hb.slice(), ha.slice());
+    var pay = PAY[ma + mb];
+    ha.push(ma); hb.push(mb); sa += pay[0]; sb += pay[1];
+  }
+  return [sa, sb];
+}
+function standings() {
+  return S.teams.map(function (t, i) { return i; }).sort(function (x, y) {
+    var a = S.teams[x], b = S.teams[y];
+    return (b.F - a.F) || ((b.F - b.A) - (a.F - a.A)) || a.name.localeCompare(b.name);
+  });
 }
 
 function move(m) {
   if (S.phase !== 'play') return;
-  var r = RULERS[S.ruler];
-  var t = r.play(S.them.slice(), S.you.slice());
+  var t = TACTICS[S.teams[S.opp].tactic].play(S.them.slice(), S.you.slice());
   var pay = PAY[m + t];
   S.you.push(m); S.them.push(t);
-  S.scoreYou += pay[0]; S.scoreThem += pay[1];
+  S.sy += pay[0]; S.st += pay[1];
   S.say = SAY[m + t];
-  if (S.you.length >= S.length) {
-    S.phase = 'guess';
-    S.say += ' A truce is declared. The match ends here.';
+  if (S.you.length >= S.length) fullTime();
+  save(); render();
+}
+
+function fullTime() {
+  S.phase = 'result';
+  S.say += ' The whistle goes. Full time.';
+  record(0, S.opp, S.sy, S.st);
+  S.results = [];
+  S.fixtures[S.week].forEach(function (p) {
+    if (p[0] === 0 || p[1] === 0) return;
+    var r = simulate(p[0], p[1]);
+    record(p[0], p[1], r[0], r[1]);
+    S.results.push([p[0], p[1], r[0], r[1]]);
+  });
+  S.meetings[S.opp] = { you: S.you, them: S.them, sy: S.sy, st: S.st, week: S.week + 1 };
+  if (S.week === WEEKS - 2) {           // final week: 1st v 2nd, 3rd v 4th, and so on
+    var o = standings(), last = [];
+    for (var i = 0; i < 10; i += 2) last.push([o[i], o[i + 1]]);
+    S.fixtures.push(last);
   }
-  render();
 }
 
-function guess(i) {
-  if (S.phase !== 'guess') return;
-  S.guess = i;
-  S.phase = 'done';
-  var right = i === S.ruler;
-  if (right) S.scoreYou += 5;
-  career.matches++;
-  if (right) career.named++;
-  career.met[RULERS[S.ruler].id] = true;
-  store('wop-career', career);
-  render();
+function next() {
+  if (S.phase !== 'result') return;
+  if (S.week >= WEEKS - 1) { newSeason(); return; }
+  S.week++;
+  kickOff();
 }
 
-function thought() {
-  var n = S.you.length, peaceTotal = 3 * n;
-  var base = S.scoreYou - (S.guess === S.ruler ? 5 : 0);
-  var wars = S.you.filter(function (m) { return m === 'W'; }).length;
-  var id = RULERS[S.ruler].id;
-  if (id === 'saint' && wars > 0)
-    return 'They never once raised a hand against you, and you attacked ' + wars + (wars === 1 ? ' time' : ' times') + '. Nothing in the rules punished you for it. Does that make it right?';
-  if (id === 'gambler')
-    return 'There was no mind on the other side, only a coin. Any pattern you saw, you invented. How often do people do the same with each other?';
-  if (id === 'warlord' && wars < n)
-    return 'Every round of peace you offered was taken from you. Is it still a virtue to trust someone who has shown you who they are?';
-  if (base > S.scoreThem && base < peaceTotal)
-    return 'You beat them ' + base + ' to ' + S.scoreThem + '. Two rulers who simply kept the peace would have had ' + peaceTotal + ' each. Did you win?';
-  if (base >= peaceTotal && wars === 0)
-    return 'You never attacked and ended with ' + base + '. You could not have known it would work when you started. Trust is only trust when it can be betrayed.';
-  if (base > peaceTotal)
-    return 'You finished above the ' + peaceTotal + ' that steady peace would have paid. Every point above it came out of someone who trusted you.';
-  if (base < S.scoreThem)
-    return 'They finished ahead, ' + S.scoreThem + ' to ' + base + '. Were you too trusting, or were they simply the kind of ruler nobody can do well against?';
-  return 'Steady peace would have paid ' + peaceTotal + ' each. You ended with ' + base + ', they with ' + S.scoreThem + '. Where did the rest go?';
+function ordinal(n) { return n + (['th', 'st', 'nd', 'rd'][n % 10 > 3 || (n > 10 && n < 14) ? 0 : n % 10]); }
+
+function seasonThought(pos) {
+  var me = S.teams[0];
+  var mostWins = S.teams.every(function (t) { return t.W <= me.W; });
+  var top = S.teams[standings()[0]];
+  if (pos === 1 && me.L === 0) return 'Champions, and nobody beat you all season.';
+  if (pos === 1) return 'Champions, despite losing ' + me.L + (me.L === 1 ? ' match' : ' matches') + '. Finishing first and beating the side in front of you turned out to be different things.';
+  if (mostWins && me.W > 0) return 'No side won more matches than you, and you still finished ' + ordinal(pos) + '. ' + top.name + ' took the title with ' + top.W + (top.W === 1 ? ' win' : ' wins') + '. What were your victories worth?';
+  if (pos >= 8) return 'You finished ' + ordinal(pos) + '. Somewhere this season a side offered you peace and you did not take it, or you offered it to the wrong one. Which was it?';
+  return 'You finished ' + ordinal(pos) + ', behind ' + top.name + '. They never played to beat anyone in particular. They played so that the next round was worth having.';
 }
 
 function chips(el, moves) {
@@ -338,48 +370,56 @@ function chips(el, moves) {
 }
 
 function render() {
-  $('you').textContent = S.scoreYou;
-  $('them').textContent = S.scoreThem;
-  $('round').textContent = S.phase === 'play' ? S.you.length + 1 : S.you.length;
+  var opp = S.teams[S.opp], over = S.phase === 'result' && S.week >= WEEKS - 1;
+  $('you').textContent = S.sy;
+  $('them').textContent = S.st;
+  $('opp-name').textContent = opp.name;
+  $('week-label').textContent = 'Week ' + (S.week + 1) + ' of ' + WEEKS;
+  $('round').textContent = S.phase === 'play' ? 'Round ' + (S.you.length + 1) : 'Full time';
   $('say').textContent = S.say;
   $('choices').hidden = S.phase !== 'play';
-  $('guess-panel').hidden = S.phase !== 'guess';
-  $('verdict').hidden = S.phase !== 'done';
+  $('verdict').hidden = S.phase !== 'result';
   chips($('hist-you'), S.you);
   chips($('hist-them'), S.them);
   $('hist-empty').hidden = S.you.length > 0;
 
-  if (S.phase === 'guess') {
-    $('guess').innerHTML = RULERS.map(function (r, i) {
-      return '<button type="button" data-i="' + i + '">' + r.name + '</button>';
-    }).join('');
-  }
-  if (S.phase === 'done') {
-    var r = RULERS[S.ruler], right = S.guess === S.ruler;
-    $('verdict-label').textContent = right
-      ? 'Correct. 5 bonus points.'
-      : 'You said ' + RULERS[S.guess].name + '. It was not.';
-    $('verdict-name').textContent = 'You faced ' + r.name;
-    $('verdict-how').textContent = r.what;
-    $('verdict-thought').textContent = thought();
+  var prev = S.phase === 'play' ? S.meetings[S.opp] : null;
+  $('last').hidden = !prev;
+  if (prev) {
+    $('last-label').textContent = 'Last meeting, week ' + prev.week + ': you ' + prev.sy + ', them ' + prev.st;
+    chips($('last-you'), prev.you);
+    chips($('last-them'), prev.them);
   }
 
-  $('rulers').innerHTML = RULERS.map(function (r) {
-    return '<li><span class="who">' + r.name + '</span><span class="what">' + r.what + '</span>' +
-      '<span class="seen">' + (career.met[r.id] ? 'MET' : '') + '</span></li>';
+  var order = standings(), pos = order.indexOf(0) + 1;
+  if (S.phase === 'result') {
+    $('verdict-label').textContent = over ? 'Season over. You finished ' + ordinal(pos) + ' of 10.' : 'Full time. You are ' + ordinal(pos) + ' in the table.';
+    $('verdict-name').textContent = 'You ' + S.sy + ' \u2013 ' + S.st + ' ' + opp.name;
+    $('results').innerHTML = S.results.map(function (r) {
+      return '<li><span>' + S.teams[r[0]].name + ' v ' + S.teams[r[1]].name + '</span><b>' + r[2] + ' \u2013 ' + r[3] + '</b></li>';
+    }).join('');
+    $('verdict-thought').hidden = !over;
+    if (over) $('verdict-thought').textContent = seasonThought(pos);
+    var nx = '';
+    if (!over) {
+      var p = S.fixtures[S.week + 1].filter(function (q) { return q[0] === 0 || q[1] === 0; })[0];
+      nx = S.teams[p[0] === 0 ? p[1] : p[0]].name;
+    }
+    $('btn-next').textContent = over ? 'Start a new season' : 'Next match: ' + nx;
+  }
+
+  $('league').innerHTML = order.map(function (i, k) {
+    var t = S.teams[i], d = t.F - t.A;
+    var cls = i === 0 ? 'me' : (S.phase === 'play' && i === S.opp ? 'next' : '');
+    return '<tr class="' + cls + '"><td class="n">' + (k + 1) + '</td><td>' + t.name + '</td><td class="n">' + t.P +
+      '</td><td class="n">' + t.W + '</td><td class="n">' + t.D + '</td><td class="n">' + t.L +
+      '</td><td class="n">' + (d > 0 ? '+' : '') + d + '</td><td class="n pts">' + t.F + '</td></tr>';
   }).join('');
-  $('career').textContent = career.matches
-    ? 'You have played ' + career.matches + (career.matches === 1 ? ' match' : ' matches') + ' and named the ruler ' + career.named + (career.named === 1 ? ' time.' : ' times.')
-    : '';
 }
 
 $('btn-peace').addEventListener('click', function () { move('P'); });
 $('btn-war').addEventListener('click', function () { move('W'); });
-$('btn-again').addEventListener('click', newMatch);
-$('guess').addEventListener('click', function (e) {
-  var b = e.target.closest('button');
-  if (b) guess(+b.dataset.i);
-});
+$('btn-next').addEventListener('click', next);
 document.addEventListener('keydown', function (e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   var k = e.key.toLowerCase();
@@ -388,7 +428,8 @@ document.addEventListener('keydown', function (e) {
 });
 
 function start(data) {
-  if (data && data.S && data.S.you) { S = data.S; render(); } else { newMatch(); }
+  var saved = (data && data.S) || load();
+  if (saved && saved.teams && saved.fixtures && saved.fixtures[saved.week]) { S = saved; render(); } else { newSeason(); }
 }
 var hot = window.claude && window.claude.hot;
 if (hot && hot.snapshot) hot.snapshot(function () { return { S: S }; });
